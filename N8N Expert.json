@@ -1,0 +1,389 @@
+{
+  "name": "N8N Expert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3b1de267-79b3-4410-8cbc-95159269e527",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        -160
+      ],
+      "id": "eacf112a-0d89-416b-b800-90e3462a1284",
+      "name": "Webhook",
+      "webhookId": "3b1de267-79b3-4410-8cbc-95159269e527"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ultra simple validation\nconsole.log('=== SIMPLE VALIDATION ===');\nconsole.log('Input:', $input);\n\n// Get data\nconst data = $input.first().json || $input.first().body || $input.first();\n\nconsole.log('Data:', data);\n\n// Just return the data as-is for now\nreturn {\n  json: {\n    ...data,\n    validation_status: 'passed',\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        -368
+      ],
+      "id": "1f2b222c-642f-4221-b902-9b312815d663",
+      "name": "Validation Node"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the validated lead data\nconst leadData = $input.first().json;\n\n// Debug: Log what we received\nconsole.log('=== SCORING DEBUG ===');\nconsole.log('Lead data received:', leadData);\n\n// Check if we have the required data\nif (!leadData) {\n  throw new Error('No data received from validation node');\n}\n\n// Extract the actual lead data (it might be nested)\nconst actualData = leadData.full_name ? leadData : leadData.body || leadData;\n\nconsole.log('Actual data to score:', actualData);\n\n// Scoring logic\nlet score = 0;\nlet scoreReason = [];\n\n// Budget scoring\nconst budget = parseFloat(actualData.budget) || 0;\nif (budget >= 10000) {\n  score += 30;\n  scoreReason.push('High budget (£' + budget + ')');\n} else if (budget >= 5000) {\n  score += 20;\n  scoreReason.push('Medium budget (£' + budget + ')');\n} else if (budget >= 1000) {\n  score += 10;\n  scoreReason.push('Low budget (£' + budget + ')');\n}\n\n// Interest level scoring\nif (actualData.interest_level === 'High') {\n  score += 25;\n  scoreReason.push('High interest');\n} else if (actualData.interest_level === 'Medium') {\n  score += 15;\n  scoreReason.push('Medium interest');\n} else {\n  score += 5;\n  scoreReason.push('Low interest');\n}\n\n// Company size scoring\nif (actualData.company_size) {\n  if (actualData.company_size === 'Enterprise' || actualData.company_size === 'Large') {\n    score += 20;\n    scoreReason.push('Large company');\n  } else if (actualData.company_size === 'Medium') {\n    score += 15;\n    scoreReason.push('Medium company');\n  } else {\n    score += 10;\n    scoreReason.push('Small company');\n  }\n}\n\n// Determine lead category\nlet leadCategory;\nif (score >= 75) {\n  leadCategory = 'Hot Lead';\n} else if (score >= 50) {\n  leadCategory = 'Warm Lead';\n} else {\n  leadCategory = 'Cold Lead';\n}\n\nconsole.log('Score calculated:', score);\nconsole.log('Score reasons:', scoreReason);\nconsole.log('Lead category:', leadCategory);\n\n// Return scored data\nreturn {\n  json: {\n    full_name: actualData.full_name,\n    email: actualData.email,\n    phone: actualData.phone || '',\n    company_size: actualData.company_size || '',\n    budget: budget,\n    interest_level: actualData.interest_level,\n    score: score,\n    score_reason: scoreReason.join(', '),\n    lead_category: leadCategory,\n    scored_at: new Date().toISOString(),\n    validation_status: 'passed',\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -368
+      ],
+      "id": "7cd837ad-dc99-4514-bdfb-ee8aeaa6b40e",
+      "name": "Scoring Node"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1wfmeAQKW-DASQtAYkauXCbrMPvQ1wUJPg9mQC5Cw8VA",
+          "mode": "list",
+          "cachedResultName": "Lead Management",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wfmeAQKW-DASQtAYkauXCbrMPvQ1wUJPg9mQC5Cw8VA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wfmeAQKW-DASQtAYkauXCbrMPvQ1wUJPg9mQC5Cw8VA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "full_name ": "={{ $json.full_name }}",
+            "email ": "={{ $json.email }}",
+            "phone ": "={{ $json.phone }}",
+            "company_size": "={{ $json.company_size }}",
+            "budget ": "={{ $json.budget }}",
+            "interest_level ": "={{ $json.interest_level }}",
+            "score": "={{ $json.score }}",
+            "score_reason": "={{ $json.score_reason }}",
+            "lead_category": "={{ $json.lead_category }}",
+            "created_at": "={{ $json.timestamp }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "full_name ",
+              "displayName": "full_name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone ",
+              "displayName": "phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_size",
+              "displayName": "company_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "budget ",
+              "displayName": "budget ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interest_level ",
+              "displayName": "interest_level ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score_reason",
+              "displayName": "score_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_category",
+              "displayName": "lead_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -512,
+        -96
+      ],
+      "id": "ad432823-ba64-4a0c-89b8-33cc1c897f55",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FNJZJvqodyA0yrnv",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2b696591-832b-42b6-86fb-cb031d17cfd9",
+              "leftValue": "={{ $json.lead_category }}",
+              "rightValue": "Hot Lead",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        -240
+      ],
+      "id": "aafc3f81-cad9-45c0-91c4-23542def377f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C098CHQA5AN",
+          "mode": "list",
+          "cachedResultName": "all-lead-qualification-workflow"
+        },
+        "text": "you got it ",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        -416
+      ],
+      "id": "0de5d8dd-f903-4a34-ab37-0cc906b7d303",
+      "name": "Send a message",
+      "webhookId": "d37a6d5f-f475-4427-9959-bbc67938226e",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1NzfDEdyfhuaLxbU",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -272
+      ],
+      "id": "4b1c3030-5137-4019-a9a7-33047aabdecc",
+      "name": "Wait",
+      "webhookId": "ebc93277-4f0a-4798-95d6-c4c6bec37932"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C098CHQA5AN",
+          "mode": "list",
+          "cachedResultName": "all-lead-qualification-workflow"
+        },
+        "text": "=Lead: {{ $json.full_name }} Category: {{ $json.lead_category }} Score: {{ $json.score }}/75  Don't forget to follow up on this lead!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        320,
+        -128
+      ],
+      "id": "287410c3-fea3-4d9d-baa5-0591a6c0b438",
+      "name": "Send a message1",
+      "webhookId": "c638ea26-a211-4cc0-93ae-454adf65fc1c",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1NzfDEdyfhuaLxbU",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validation Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Node": {
+      "main": [
+        [
+          {
+            "node": "Scoring Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scoring Node": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "709865d8-fce1-4cbc-9470-1bfbccf48b74",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f22b041adb0a3b44d2c75d794c0b8e686a385ec4e8db44c8d193d2b300537d18"
+  },
+  "id": "vyXufaGlK6GZ2pBR",
+  "tags": []
+}
