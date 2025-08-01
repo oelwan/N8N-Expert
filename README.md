@@ -11,7 +11,8 @@ This project implements an automated lead qualification system using n8n workflo
 Webhook Trigger → Validation → Scoring → Google Sheets → IF Node → Slack Notification → Wait → Follow-up
 ```
 
-![Image Alt]([[image_url](https://github.com/oelwan/N8N-Expert/blob/main/n8n.jpg?raw=true)](https://github.com/oelwan/N8N-Expert/blob/5b1e24584935d37ed79d9b08818b93f6fb2d25c3/n8n.jpg)).
+![Image Alt](<img width="1600" height="763" alt="image" src="https://github.com/user-attachments/assets/a8aff674-a77c-4ce0-9eb0-4d593fa2eb90" />
+).
 
 **Detailed Flow:**
 1. **Webhook Trigger:** Receives POST requests with lead data
