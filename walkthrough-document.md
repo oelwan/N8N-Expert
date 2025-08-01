@@ -44,8 +44,8 @@ The system evaluates leads based on three key factors with a maximum score of 75
 
 ### Lead Categories
 - **Hot Lead:** 75+ points (Immediate attention required)
-- **Warm Lead:** 30-74 points (Requires nurturing)
-- **Cold Lead:** <30 points (Long-term nurturing strategy)
+- **Warm Lead:** 50-74 points (Requires nurturing)
+- **Cold Lead:** <50 points (Long-term nurturing strategy)
 
 ### Example Calculations
 **Perfect Hot Lead:**
